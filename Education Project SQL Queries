@@ -1,0 +1,48 @@
+--Initial Queries to look at data from each source and evaluate merge columns and cleaning procedures
+
+--School Data (Note: Data needs to be transformed into "tidy" format which will help on join, CDS needs to be created from respective Location Codes)
+SELECT 
+	[County Code],
+	[District Code],
+	[School Code],
+	[County Name], 
+	[District Name], 
+	[School Name], 
+	[Total Staff Count],
+	[African American] AS AA,
+	[American Indian or Alaska Native] AS AI,
+	[Asian] AS 'AS',
+	[Filipino] AS FI,
+	[Hispanic or Latino] AS HI,
+	[Pacific Islander] AS 'PI',
+	[White] AS WH,
+	[Two or More Races] AS MR,
+	[Not Reported] AS NP
+
+FROM [Project Database].[dbo].[staff_data]
+WHERE [Aggregate Level] LIKE 'S' 
+	AND [School Code] <> 0 
+	AND [Charter School] LIKE 'N' 
+	AND [Staff Type] LIKE 'TCH'
+	AND [Staff Gender] LIKE 'ALL'
+
+
+--Student Data
+SELECT cds, studentgroup, totalenrollment, subgrouptotal, rate, schoolname
+FROM [Project Database].[dbo].[stdnt_info]
+WHERE rtype LIKE 'S'
+	AND studentgroup NOT LIKE 'HOM'
+	AND studentgroup NOT LIKE 'FOS'
+	AND studentgroup NOT LIKE 'SWD'
+	AND studentgroup NOT LIKE 'SED'
+	AND studentgroup NOT LIKE 'EL' 
+
+--Staff Data
+
+SELECT CDSCode AS cds,
+	Latitude,
+	Longitude,
+	School
+FROM [Project Database].dbo.school_info
+WHERE Latitude NOT LIKE 'No Data'
+ORDER BY CDSCode
