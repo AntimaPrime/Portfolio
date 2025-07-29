@@ -17,7 +17,7 @@ df2 = df_staff.astype(dtype_map)
 df2['School Code'] = df2['School Code'].apply(lambda x: '0' + x if len(x) == 6 else x)
 df2['cds'] = df2['County Code'] + df2['District Code'] + df2['School Code']
 
-#cast to int type as other tables imported as int
+#cast to int type
 df2['cds'] = df2['cds'].astype(int)
 
 #melt to "tidy" data for joins
