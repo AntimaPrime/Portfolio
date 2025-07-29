@@ -46,3 +46,13 @@ SELECT CDSCode AS cds,
 FROM [Project Database].dbo.school_info
 WHERE Latitude NOT LIKE 'No Data'
 ORDER BY CDSCode
+
+--Join script
+
+SELECT a.*, b.[Total Staff Count], b.teacher_group, b.sub_staff_count, c.Latitude, c.Longitude
+FROM [Project Database].dbo.stdnt$ a
+LEFT JOIN [Project Database].dbo.staff$ b
+ON a.cds = b.cds AND b.teacher_group = a.studentgroup
+JOIN [Project Database].dbo.school$ c
+ON a.cds = c.cds
+WHERE b.teacher_group IS NOT NULL
