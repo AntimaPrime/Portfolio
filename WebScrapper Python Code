@@ -1,0 +1,44 @@
+import requests
+import pandas as pd
+from bs4 import BeautifulSoup
+from sqlalchemy import create_engine
+#database connection engine
+engine = create_engine("sqlite:///F:/SQLite Database/Yahoo.db")
+
+i = 0
+while i < 300:
+    url = (r"https://finance.yahoo.com/markets/stocks/most-active/?start=" + str(i) + "&count=100")
+    i = i + 100
+    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36" "X-Amzn-Trace-Id"}
+
+#Import data and soupify
+    data_import = requests.get(url, headers = headers)
+    data_text = data_import.content
+    soup = BeautifulSoup(data_text, 'lxml')
+
+#Headers
+    titles = soup.find_all('th')
+    title_top = [title.text.strip() for title in titles]
+    df = pd.DataFrame(columns=title_top)
+
+#Data
+    column_data = soup.find_all('tr')
+    row_length = len(column_data)
+    for row in column_data[1:row_length-1]:
+        row_data = row.find_all('td')
+        ind_row_data = [data.text.strip() for data in row_data]
+        length = len(df)
+        df.loc[length] = ind_row_data
+#Delete empty dataframes
+    if len(df) == 0:
+        del df
+        break
+#Drop empty columns and add timestamp
+    else:
+        df = df.drop(columns=[''])
+        df['date_time'] = pd.Timestamp("now")
+#Output to database
+    try:
+        df.to_sql('stock_info', engine, if_exists='append', index=False)
+    except:
+        print('Error updating database')
