@@ -1,0 +1,75 @@
+--++++++++++++++++++++++++   Data Cleaning   +++++++++++++++++++++++++--
+create table stock_info_stage (
+Symbol varchar(30),
+Name varchar(30),
+Price float,
+Change float,
+Change_Percent float,
+Volume float,
+Average_Volume float,
+Market_Cap float,
+PE_Ratio float,
+[52_Week_Change] float,
+Date_Time datetime
+);
+
+insert into stock_info_stage ([Symbol], [Name], [Price], [Change], [Change_Percent], [Volume], [Average_Volume], [Market_Cap], [PE_Ratio], [52_Week_Change], [date_time])
+select [Symbol], [Name], [Price], [Change], [Change %], [Volume], [Avg vol (3m)], [Market cap], [P/E Ratio (TTM)], [52 Wk Change %], [date_time]
+from stock_info;
+
+--Simplify Date_Time
+update stock_info_stage
+set Date_Time = DATETIME(Date_Time);
+
+--Fix Price column to only have current price
+update stock_info_stage
+set [Price] = substring(Price, 0, instr(Price,' '));
+
+--Remove M in Volume and Average Volume
+--Verify all values are in millions
+select Volume, Average_Volume
+from stock_info_stage
+where Volume not like '%M%' or Average_Volume not like '%M%';
+
+--Remove M
+update stock_info_stage 
+set Volume = SUBSTR(Volume, 0, instr(Volume, 'M')),
+	Average_Volume = SUBSTR(Average_Volume, 0, instr(Average_Volume, 'M'));
+
+--Remove % sign from Change_Percent and 52_Week_Change
+update stock_info_stage
+set Change_Percent = substring(Change_Percent, 1, length(Change_Percent)-1);
+
+update stock_info_stage
+set [52_Week_Change] = substring([52_Week_Change], 1, length([52_Week_Change])-1);
+
+--Remove + sign on 52_Week_Change
+update stock_info_stage
+set [52_Week_Change] = substring([52_Week_Change], 2, length([52_Week_Change])-1)
+where [52_Week_Change] like '%+%'
+
+-- Change Market Cap to Billions
+update stock_info_stage
+set Market_Cap = case 
+	when substring(Market_Cap, -1, length(Market_Cap)) ='T' then substring(Market_Cap, 1, length(Market_Cap)-1)*1000
+	else substring(Market_Cap, 1, length(Market_Cap)-1)
+end;
+--Validation
+select a.Market_Cap, b.[Market cap]
+from stock_info_stage a
+join stock_info b
+on a.Symbol = b.Symbol and a.Date_Time = datetime(b.Date_Time)
+where substring(b.[Market cap], -1, length(b.[Market cap])) like 'T';
+
+--Rename columns to show units
+alter table stock_info_stage
+rename column "Volume" to "Volume(M)";
+
+alter table stock_info_stage
+rename column "Average_Volume" to "Average_Volume(M)";
+
+alter table stock_info_stage
+rename column "Market_Cap" to "Market_Cap(B)";
+
+alter table stock_info_stage
+rename column "52_Week_Change" to "52_Week_Change(%)";
